@@ -58,9 +58,11 @@ export function registerAssignedMcpGateway(db: Db, gateway: ToolGatewayService):
   assignedMcpGateways.set(db, gateway);
 }
 
-export function getAssignedMcpGateway(db: Db): ToolGatewayService {
+export function getAssignedMcpGateway(db: Db): ToolGatewayService;
+export function getAssignedMcpGateway(db: Db, options: { required: false }): ToolGatewayService | undefined;
+export function getAssignedMcpGateway(db: Db, options?: { required: false }): ToolGatewayService | undefined {
   const gateway = assignedMcpGateways.get(db);
-  if (!gateway) throw new Error("assigned_mcp_gateway_unavailable");
+  if (!gateway && options?.required !== false) throw new Error("assigned_mcp_gateway_unavailable");
   return gateway;
 }
 

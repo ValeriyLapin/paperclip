@@ -12,6 +12,11 @@ const serviceMocks = vi.hoisted(() => ({
   exportFiles: vi.fn(),
   getEffectiveProfilesForAgent: vi.fn(),
   githubBotConnectionIdsForRun: vi.fn(),
+  listPluginToolsForAgent: vi.fn().mockResolvedValue([]),
+}));
+
+vi.mock("./assigned-mcp-tools.js", () => ({
+  getAssignedMcpGateway: () => ({ listPluginToolsForAgent: serviceMocks.listPluginToolsForAgent }),
 }));
 
 vi.mock("../chat-github-tools.js", () => ({
@@ -50,6 +55,7 @@ async function makeTreeWritable(target: string): Promise<void> {
 
 beforeEach(async () => {
   vi.clearAllMocks();
+  serviceMocks.listPluginToolsForAgent.mockResolvedValue([]);
   serviceMocks.githubBotConnectionIdsForRun.mockResolvedValue(new Set());
   previousPaperclipHome = process.env.PAPERCLIP_HOME;
   previousInstanceId = process.env.PAPERCLIP_INSTANCE_ID;
@@ -90,6 +96,20 @@ afterEach(async () => {
 });
 
 describe("buildNativeRuntimeContext", () => {
+  it("pins plugin names in stable order alongside connection assignments", async () => {
+    const input = { db: {} as Db, agent: { id: "agent-1", companyId: "company-1" }, runId: "run-1" };
+    const original = await resolveNativeRuntimeMcpSnapshot(input);
+    expect(original.digest).toBe(createHash("sha256").update(JSON.stringify({
+      version: 1, agentId: "agent-1", connections: ["connection-1"], tools: ["tool-1"],
+    })).digest("hex"));
+    serviceMocks.listPluginToolsForAgent.mockResolvedValue([{ name: "fixture:second" }, { name: "fixture:first" }]);
+    const first = await resolveNativeRuntimeMcpSnapshot(input);
+    serviceMocks.listPluginToolsForAgent.mockResolvedValue([{ name: "fixture:first" }, { name: "fixture:second" }]);
+    expect(await resolveNativeRuntimeMcpSnapshot(input)).toEqual(first);
+    expect(first.digest).not.toBe(original.digest);
+    expect(first.bindingId).toBe("native-mcp:run-1");
+  });
+
   it.each(["disabled", "degraded"] as const)(
     "omits an unavailable native MCP connection when it is %s without aborting runtime context creation",
     async (unavailableState) => {

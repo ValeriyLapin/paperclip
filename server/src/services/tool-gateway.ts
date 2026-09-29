@@ -10245,6 +10245,23 @@ export function createToolGatewayService(
             toolName: storedInvocation.toolName,
           });
         }
+        if (tool.providerType === "paperclip_plugin" && session.gatewayId) {
+          const [gateway] = await db.select({ metadata: toolMcpGateways.metadata })
+            .from(toolMcpGateways)
+            .where(and(eq(toolMcpGateways.companyId, session.companyId), eq(toolMcpGateways.id, session.gatewayId)))
+            .limit(1);
+          if (typeof gateway?.metadata?.nativeRuntimeAssignmentDigest === "string") {
+            const decisionInput = policyInputForTool({ session, tool, parameters: storedParameters });
+            const accessDecision = await policyService.decide(decisionInput);
+            if (!accessDecision.allowed && accessDecision.decision !== "require_approval") {
+              await policyService.writeAudit(decisionInput, accessDecision);
+              throw new ToolGatewayHttpError(
+                policyErrorStatus(accessDecision), accessDecision.explanation, accessDecision.reasonCode,
+                { invocationId: storedInvocation.id, actionRequestId: actionRequest.id, tool: tool.name },
+              );
+            }
+          }
+        }
         const claimedAt = new Date();
         const [claimed] = await db
           .update(toolActionRequests)
