@@ -171,6 +171,7 @@ export async function resolveNativeRuntimeMcpSnapshot(input: { db: Db; agent: Pi
   const pluginToolNames = (await getAssignedMcpGateway(input.db, { required: false })?.listPluginToolsForAgent({
     companyId: input.agent.companyId,
     agentId: input.agent.id,
+    runId: input.runId,
   }) ?? []).map((tool) => tool.name).sort();
   const effective = await toolAccessService(input.db).getEffectiveProfilesForAgent(input.agent.companyId, input.agent.id);
   const permitted = new Set([...effective.entries.filter((entry) => entry.effect === "include" && entry.connectionId).map((entry) => entry.connectionId!), ...effective.allowedTools.map((tool) => tool.connectionId)]);

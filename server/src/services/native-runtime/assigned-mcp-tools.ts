@@ -93,7 +93,8 @@ export async function createAssignedMcpTools(input: {
     if (tools.has(name)) throw new Error("assigned_mcp_tool_name_collision");
     tools.set(name, descriptor);
   }
-  const permits = (tool: ToolGatewayDescriptor, mode: WorkMode = input.workMode ?? "standard") => mode === "standard" || tool.risk === "read";
+  const permits = (tool: ToolGatewayDescriptor, mode: WorkMode = input.workMode ?? "standard") =>
+    mode === "standard" || (tool.risk === "read" && tool.providerType !== "paperclip_plugin");
 
   async function search(argumentsValue: unknown, currentWorkMode?: WorkMode) {
     const args = object(argumentsValue);

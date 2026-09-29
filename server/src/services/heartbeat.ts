@@ -4641,6 +4641,7 @@ export async function buildPaperclipRuntimeMcpServers(input: {
   const pluginToolNames = (await service.listPluginToolsForAgent({
     companyId: input.agent.companyId,
     agentId: input.agent.id,
+    runId: input.runId,
   })).map((tool) => tool.name).sort();
   if (assignedConnections.length === 0 && pluginToolNames.length === 0) {
     await service.recordRuntimeMcpDeliveryDiagnostic({

@@ -108,6 +108,7 @@ describe("buildNativeRuntimeContext", () => {
     expect(await resolveNativeRuntimeMcpSnapshot(input)).toEqual(first);
     expect(first.digest).not.toBe(original.digest);
     expect(first.bindingId).toBe("native-mcp:run-1");
+    expect(serviceMocks.listPluginToolsForAgent).toHaveBeenCalledWith({ companyId: "company-1", agentId: "agent-1", runId: "run-1" });
   });
 
   it.each(["disabled", "degraded"] as const)(

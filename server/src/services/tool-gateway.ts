@@ -8875,6 +8875,7 @@ export function createToolGatewayService(
     async listPluginToolsForAgent(input: {
       companyId: string;
       agentId: string;
+      runId?: string | null;
     }): Promise<AgentToolDescriptor[]> {
       await assertAgentInCompany(input.companyId, input.agentId);
       const decisions = await Promise.all(
@@ -8884,6 +8885,7 @@ export function createToolGatewayService(
               companyId: input.companyId,
               agentId: input.agentId,
               tool,
+              heartbeatRunId: input.runId,
             }),
           );
           return { tool, decision };
